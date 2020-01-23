@@ -20,3 +20,29 @@ exports.createPostValidator = (req, res, next) => {
     }
     next()
 }
+
+exports.signupValidator = (req, res, next) => {
+    let errors = []
+    const { email, name, password } = req.body
+    const emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    if (!emailRegex.test(email)) {
+        errors.push('Email no válido')
+    }
+    if (name && typeof(name) === 'string' && name.length < 5 || name.length > 20) {
+        errors.push('El nombre debe tener entre 5 y 20 caracteres')
+    } else if (name.length === 0 || name === '' || !name) {
+        errors.push('Debe haber un nombre')
+    }
+    if (password && typeof(password) === 'string' && password.length < 8) {
+        errors.push('La contraseña debe tener 8 o más caracteres')
+    } else if (password.length === 0 || password === '' || !password) {
+        errors.push('Debe haber una contraseña')
+    }
+    if (!/\d/.test(password)) {
+        errors.push('La contraseña debe tener al menos un número')
+    }
+    if (errors[0]) {
+        return res.status(400).json({ message: errors.join('. ') })
+    }
+    next()
+}
