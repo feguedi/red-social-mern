@@ -43,6 +43,27 @@ exports.login = async (req, res) => {
     })
 }
 
+exports.logout = async (req, res) => {
+    res.clearCookie('t')
+    return await res.json({ message: 'Sesión cerrada' })
+}
+
+exports.allUsers = (req, res) => {
+    User.find(async (err, users) => {
+        if (err) return await res.status(400).json({ message: err.message })
+        // const _users = users.map(user => { 
+        //     const { _id, name, email, created } = user
+        //     return { _id, name, email, created }
+        // })
+        await res.json({ users })
+    }).select('name email created updated')
+}
+
+exports.userProfile = async (req, res) => {
+    const { _id, name, email } = req.profile
+    return await res.json({ user: { _id, name, email } })
+}
+
 exports.errorHandler = (req, res) => {
     res.status(404).json({ message: `Error: ruta ${ req.originalUrl } no encontrada` })
 }

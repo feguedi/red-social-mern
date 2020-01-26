@@ -1,3 +1,6 @@
+const Usuario = require('../models/user')
+const jwt = require('jsonwebtoken')
+
 exports.createPostValidator = (req, res, next) => {
     let errors = []
     const { title, body } = req.body
@@ -45,4 +48,40 @@ exports.signupValidator = (req, res, next) => {
         return res.status(400).json({ message: errors.join('. ') })
     }
     next()
+}
+
+exports.requireCredentials = (req, res, next) => {
+    const authorizationHeader = req.headers.authorization
+    if (typeof(authorizationHeader) !== 'undefined') {
+        const bearer = authorizationHeader.split(' ')
+        const bearerToken = bearer[1]
+
+        jwt.verify(bearerToken, process.env.SECRET_KEY, (err, datos) => {
+            if (err) return res.status(401).json({ message: 'Token inválido' })
+
+            req.user = {}
+            req.user['_id'] = datos
+
+            Usuario.findById(req.user._id, (err, usuario) => {
+                if (err) return res.status(500).json({ message: err.message })
+                if (!usuario) return res.status(400).json({ message: 'Credenciales incorrectas' })
+                if (usuario.password !== req.user.password) {
+                    return res.status(401).json({ message: 'Credenciales incorrectas' })
+                }
+                req.user.email = usuario.email
+                req.user.name = usuario.name
+                next()
+            })
+        })
+    } else {
+        return res.status(401).json({ message: 'Acción no autorizada. Token inválido' })
+    }
+}
+
+exports.userById = async (req, res, next, id) => {
+    User.findById(id, (err, user) => {
+        if (err || !user) return res.status(400).json({ message: 'Usuario no encontrado' })
+        req.profile = user
+        next()
+    })
 }
